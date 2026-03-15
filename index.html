@@ -510,9 +510,9 @@ async function fetchDataFromCloud() {
     // 加一個 Timestamp 防止 Cache
     const ts = new Date().getTime();
     const [teachersRes, mappingRes, schedulesRes] = await Promise.all([
-      fetch(`${CLOUD_URLS.teachers}?t=${ts}`),
-      fetch(`${CLOUD_URLS.mapping}?t=${ts}`),
-      fetch(`${CLOUD_URLS.schedules}?t=${ts}`)
+      fetch(`${CLOUD_URLS.teachers}&t=${ts}`),
+      fetch(`${CLOUD_URLS.mapping}&t=${ts}`),
+      fetch(`${CLOUD_URLS.schedules}&t=${ts}`)
     ]);
 
     if (!teachersRes.ok || !mappingRes.ok || !schedulesRes.ok) {
