@@ -1144,10 +1144,6 @@ function renderRescheduleTables(classList, myNameClean, myLeaveDay) {
             if (isTeacherBusy(myNameClean, currentTimeKey)) {
                cellClass = "cell-self-busy"; // 我自己有課，不能調來這
                cellTitle = "不可調：您本人此節已有排課";
-               if(d == myLeaveDay) {
-                   content += `<span class="text-danger small fw-bold d-block" style="font-size:0.7em">(當天請假)</span>`;
-                   cellTitle = "不可調：當天您已登記請假";
-               }
             } else {
               // 4. 判斷對方是否可調
               if (otherTeacher !== "無" && otherTeacherDisplay !== myNameClean) {
