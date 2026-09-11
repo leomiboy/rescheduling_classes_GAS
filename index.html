@@ -176,13 +176,18 @@
             cursor: pointer;
             position: relative;
         }
-        .cell-swap-discouraged::after {
-            content: "⚠️不宜";
-            display: block;
+        .discouraged-badge {
+            display: inline-block;
             font-size: 0.75em;
             font-weight: bold;
-            color: #d39e00;
+            color: #996500;
+            background-color: #ffe69c;
+            border: 1px solid #ffd666;
+            border-radius: 4px;
+            padding: 1px 3px;
             margin-top: 2px;
+            white-space: nowrap;
+            line-height: 1.2;
         }
 
         .cell-swap-no {
@@ -386,12 +391,12 @@
           <span><span class="badge bg-primary">藍色</span> 本堂請假</span>
           <span><span class="badge bg-secondary">灰色</span> 不可調 (本人有課)</span>
           <span><span class="badge bg-success border border-success">淺綠</span> 可調課 ✅ (對方空堂)</span>
-          <span><span class="badge bg-warning text-dark border border-warning">淺橘</span> 不宜調 ⚠️ (兼課/抽離/英資/共同不排課)</span>
+          <span><span class="badge bg-warning text-dark border border-warning">淺橘</span> 不宜調 ⚠️ (兼課/抽離/共備/本土，懸停可看詳細原因)</span>
           <span><span class="badge bg-danger bg-opacity-75">淺紅</span> 撞堂 ❌ (對方有課)</span>
         </div>
         <div class="mt-2 text-muted small border-top pt-2">
           <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> 
-          <strong>淺橘色說明：</strong>兼課老師、本土語、英資班英語課、學習中心課程（抽離）、各領域共同不排課時段（領域共備/行政會議/公假）皆不建議調課。若有必要，請先電洽教務處教學組或是相關處室詢問調課的可能性。
+          <strong>淺橘色說明：</strong>格內標示具體原因（如 <code>⚠️不宜·兼課</code>、<code>⚠️不宜·抽離</code>、<code>⚠️不宜·共備</code>、<code>⚠️不宜·本土語</code> 等）。滑鼠懸停於該格可查看完整原由。若有必要，請先電洽教務處教學組或是相關處室詢問調課的可能性。
         </div>
       </div>
 
@@ -441,12 +446,13 @@ const PART_TIME_TEACHERS = [
 const RESOURCE_ROOM_RULES = {};
 
 // 輔助函式：批次設定抽離/特教規則
-function setResourceRule(classes, subjects) {
+function setResourceRule(classes, subjects, typeName = "抽離群組") {
   classes.forEach(cls => {
     if (!RESOURCE_ROOM_RULES[cls]) RESOURCE_ROOM_RULES[cls] = [];
     subjects.forEach(s => {
-      if (!RESOURCE_ROOM_RULES[cls].includes(s)) {
-        RESOURCE_ROOM_RULES[cls].push(s);
+      const exists = RESOURCE_ROOM_RULES[cls].some(item => (typeof item === 'string' ? item : item.subject) === s);
+      if (!exists) {
+        RESOURCE_ROOM_RULES[cls].push({ subject: s, type: typeName });
       }
     });
   });
@@ -454,45 +460,43 @@ function setResourceRule(classes, subjects) {
 
 // --- 1. 學習中心 (特教資源班) 抽離群組 ---
 // G9 群組
-setResourceRule(["905", "906", "907"], ["國文", "讀寫萬華園", "英語", "英語DNA", "數學", "想享DNA"]);
-setResourceRule(["904"], ["英語", "讀寫萬華園", "數學", "想享DNA"]); // 904只抽數英，國文無抽
+setResourceRule(["905", "906", "907"], ["國文", "讀寫萬華園", "英語", "英語DNA", "數學", "想享DNA"], "學習中心抽離");
+setResourceRule(["904"], ["英語", "讀寫萬華園", "數學", "想享DNA"], "學習中心抽離"); // 904只抽數英，國文無抽
 
 // G8 群組
-setResourceRule(["802", "806", "807", "808", "809", "810"], ["國文", "想享DNA", "英語", "英語DNA", "數學"]);
-setResourceRule(["803", "811"], ["想享DNA"]);
+setResourceRule(["802", "806", "807", "808", "809", "810"], ["國文", "想享DNA", "英語", "英語DNA", "數學"], "學習中心抽離");
+setResourceRule(["803", "811"], ["想享DNA"], "學習中心抽離");
 
 // G7 群組
-setResourceRule(["701", "702", "703", "704"], ["國文", "想享DNA", "英語", "英語DNA", "數學"]);
-setResourceRule(["705"], ["國文", "想享DNA", "英語", "英語DNA", "數學", "體育"]); // 705體育協同
-setResourceRule(["706", "707", "708", "709", "710", "711"], ["想享DNA"]);
+setResourceRule(["701", "702", "703", "704"], ["國文", "想享DNA", "英語", "英語DNA", "數學"], "學習中心抽離");
+setResourceRule(["705"], ["國文", "想享DNA", "英語", "英語DNA", "數學", "體育"], "學習中心抽離"); // 705體育協同
+setResourceRule(["706", "707", "708", "709", "710", "711"], ["想享DNA"], "學習中心抽離");
 
 // --- 2. 英語資優資源班 抽離群組 ---
 // 英資九年級
-setResourceRule(["901", "911"], ["英語", "英語DNA"]);
-setResourceRule(["904", "908", "909"], ["英語", "英語DNA"]);
-setResourceRule(["905", "906", "907"], ["英語", "英語DNA"]);
+setResourceRule(["901", "911"], ["英語", "英語DNA"], "英資班抽離");
+setResourceRule(["904", "908", "909"], ["英語", "英語DNA"], "英資班抽離");
+setResourceRule(["905", "906", "907"], ["英語", "英語DNA"], "英資班抽離");
 
 // 英資八年級
-setResourceRule(["802", "803", "810"], ["英語", "英語DNA"]);
-setResourceRule(["805", "808", "809"], ["英語", "英語DNA"]);
+setResourceRule(["802", "803", "810"], ["英語", "英語DNA"], "英資班抽離");
+setResourceRule(["805", "808", "809"], ["英語", "英語DNA"], "英資班抽離");
 
 // 英資七年級
-setResourceRule(["702", "703", "704"], ["英語", "英語DNA"]);
-setResourceRule(["705", "711"], ["英語", "英語DNA"]);
-setResourceRule(["701", "706", "709"], ["英語", "英語DNA"]);
-setResourceRule(["707", "708", "710"], ["英語", "英語DNA"]);
+setResourceRule(["702", "703", "704"], ["英語", "英語DNA"], "英資班抽離");
+setResourceRule(["705", "711"], ["英語", "英語DNA"], "英資班抽離");
+setResourceRule(["701", "706", "709"], ["英語", "英語DNA"], "英資班抽離");
+setResourceRule(["707", "708", "710"], ["英語", "英語DNA"], "英資班抽離");
 
 // --- 3. 教師共同不排課時段資料庫 (共備、行政會議、公假、特定任務) ---
 const TEACHER_RESTRICTED_SLOTS = {};
 
-function addRestrictedSlots(teachers, slots) {
+function addRestrictedSlots(teachers, slots, reason = "共同不排課/領域共備") {
   teachers.forEach(t => {
     const name = cleanName(t);
-    if (!TEACHER_RESTRICTED_SLOTS[name]) TEACHER_RESTRICTED_SLOTS[name] = [];
+    if (!TEACHER_RESTRICTED_SLOTS[name]) TEACHER_RESTRICTED_SLOTS[name] = {};
     slots.forEach(slot => {
-      if (!TEACHER_RESTRICTED_SLOTS[name].includes(slot)) {
-        TEACHER_RESTRICTED_SLOTS[name].push(slot);
-      }
+      TEACHER_RESTRICTED_SLOTS[name][slot] = reason;
     });
   });
 }
@@ -502,111 +506,111 @@ function addRestrictedSlots(teachers, slots) {
 addRestrictedSlots([
   "鄭美玲", "蕭淑娟", "紀閔中", "楊蕙昀", "林昌合", "林昌和", "陳宇楠", "許瑞恬", 
   "胡雅雯", "施淑儀", "蕭朝昌", "陳志雄", "陳靜茹", "陳盈如", "陳秀蘭", "郭家棋", "陳玫含", "趙佳慧"
-], ["1-5"]);
+], ["1-5"], "九年級導師會");
 
 // (2) 彈性課程共備：週一第5、6節
 addRestrictedSlots([
   "藍淑珠", "陳建華", "張嫈嫈", "陳盈如", "許皓雲", "徐俊富", "鄭世婉", "黃崇葳", "吳德彥", "李訓仁"
-], ["1-5", "1-6"]);
+], ["1-5", "1-6"], "彈性課程共備");
 
 // (3) 語文英語領域：週一下午第5~7節
 addRestrictedSlots([
   "古正宇", "吳德彥", "黃崇葳", "廖玟綾", "韓文瑤", "楊馥聰", "王美惠", "陳惠美"
-], ["1-5", "1-6", "1-7"]);
+], ["1-5", "1-6", "1-7"], "英語領域共備");
 
 // (4) 藝文領域：週二上午第1~4節
 addRestrictedSlots([
   "陳又綾", "黃麗娟", "陳怡君", "陳美君", "林昌和", "林昌合", "鄭世婉"
-], ["2-1", "2-2", "2-3", "2-4"]);
+], ["2-1", "2-2", "2-3", "2-4"], "藝文領域共備");
 
 // (5) 雙語共備：週二第4節
 addRestrictedSlots([
   "陳靜茹", "陳威宇", "王曉玲", "陳淑君", "王美玲", "陳盈如", "陳玫含", "曾宜華", 
   "郭瑋淋", "陳美君", "黃麗娟", "李姿伶", "董宇", "黃崇葳", "王美惠", "陳惠美"
-], ["2-4"]);
+], ["2-4"], "雙語共備");
 
 // (6) 自然及社會領域：週二下午第5~7節
 addRestrictedSlots([
   "林永章", "劉志強", "柳之力", "胡雅雯", "陳志雄", "董雅華", "李訓仁", "徐欣郁", 
   "吳世川", "楊蕙昀", "廖芳櫻", "李安琦", "許瑞恬", "吳政典", "陳幸均", "高鴻傑", 
   "陳靜茹", "陳秀蘭", "郭家棋", "陳盈如"
-], ["2-5", "2-6", "2-7"]);
+], ["2-5", "2-6", "2-7"], "自然/社會領域共備");
 
 // (7) 行政會議：週三上午第1~4節
 addRestrictedSlots([
   "陳靜茹", "陳威宇", "王曉玲", "陳淑君", "王美玲", "陳盈如", "陳秀蘭", "郭家棋", 
   "陳慶全", "陳玫含", "潘信吉", "蔣明錦", "連婉珍", "趙佳慧", "林怡妤", "陳建華"
-], ["3-1", "3-2", "3-3", "3-4"]);
+], ["3-1", "3-2", "3-3", "3-4"], "行政會議");
 
 // (8) 召集人 & 級導師：週三第3~4節
 addRestrictedSlots([
   "陳玫含", "吳德彥", "陳建華", "劉志強", "陳幸均", "李靜宜", "鄭世婉", "塗於文", 
   "趙佳慧", "黃昱綺", "楊馥聰", "林昌和", "林昌合", "王依婷"
-], ["3-3", "3-4"]);
+], ["3-3", "3-4"], "召集人及級導師會");
 
 // (9) 教學輔導教師：週三第5節
 addRestrictedSlots([
   "陳靜茹", "陳盈如", "張嫈嫈", "陳宇楠", "蕭淑娟", "趙佳慧", "李訓仁", "陳台瓊", "黃宜霞"
-], ["3-5"]);
+], ["3-5"], "教學輔導教師會");
 
 // (10) ACT及媒體素養共備：週三第5、6節
 addRestrictedSlots([
   "藍淑珠", "陳建華", "張嫈嫈", "陳盈如", "許皓雲", "陳慶全", "王曉玲"
-], ["3-5", "3-6"]);
+], ["3-5", "3-6"], "ACT/媒體素養共備");
 
 // (11) 數學領域：週三下午第5~7節
 addRestrictedSlots([
   "許皓雲", "蕭淑娟", "陳宇楠", "徐俊富", "陳建華", "蕭朝昌", "陳玉燕", "郭雅靜", "吳淑婷"
-], ["3-5", "3-6", "3-7"]);
+], ["3-5", "3-6", "3-7"], "數學領域共備");
 
 // (12) 健體領域：週四上午第1~4節
 addRestrictedSlots([
   "陳威宇", "潘信吉", "蔣明錦", "連婉珍", "章瀚陽", "李靜宜", "王義文", "莊惟棟", "陳合如", "郭瑋淋"
-], ["4-1", "4-2", "4-3", "4-4"]);
+], ["4-1", "4-2", "4-3", "4-4"], "健體領域共備");
 
 // (13) 綜合領域：週四上午第1~4節
 addRestrictedSlots([
   "李姿伶", "董宇", "曾宜華", "趙佳慧", "林怡妤", "朱喜鳳", "楊怡婷", "李淑芬", "范家豪"
-], ["4-1", "4-2", "4-3", "4-4"]);
+], ["4-1", "4-2", "4-3", "4-4"], "綜合領域共備");
 
 // (14) 國文領域：週四下午第5~7節
 addRestrictedSlots([
   "王秀菊", "黃昱綺", "林平", "蔡孟宜", "紀閔中", "羅喬憶", "李宛真", "曹杏一", 
   "施淑儀", "鄭美玲", "徐語欣", "陳玫含", "王曉玲", "陳淑君", "王依婷", "陳盈如"
-], ["4-5", "4-6", "4-7"]);
+], ["4-5", "4-6", "4-7"], "國文領域共備");
 
 // (15) 科技領域：週五上午第1~4節
 addRestrictedSlots([
   "蔡啟田", "塗於文", "陳慶全", "簡百育", "王曉玲"
-], ["5-1", "5-2", "5-3", "5-4"]);
+], ["5-1", "5-2", "5-3", "5-4"], "科技領域共備");
 
 // (16) 生物科共備：週五第3~4節
 addRestrictedSlots([
   "王美玲", "李訓仁", "徐欣郁"
-], ["5-3", "5-4"]);
+], ["5-3", "5-4"], "生物科共備");
 
 // (17) 處室簽准及特定任務不排課時段
 // 輔導團：王美玲、陳盈如、張嫈嫈 週二全天；藍淑珠 週二下午、週四全天
-addRestrictedSlots(["王美玲", "陳盈如", "張嫈嫈"], ["2-1", "2-2", "2-3", "2-4", "2-5", "2-6", "2-7"]);
-addRestrictedSlots(["藍淑珠"], ["2-5", "2-6", "2-7", "4-1", "4-2", "4-3", "4-4", "4-5", "4-6", "4-7"]);
+addRestrictedSlots(["王美玲", "陳盈如", "張嫈嫈"], ["2-1", "2-2", "2-3", "2-4", "2-5", "2-6", "2-7"], "輔導團公假");
+addRestrictedSlots(["藍淑珠"], ["2-5", "2-6", "2-7", "4-1", "4-2", "4-3", "4-4", "4-5", "4-6", "4-7"], "輔導團公假");
 // 美玲主任：週四第5-7節、週五第3-7節不排課 (教育部推廣委員)
-addRestrictedSlots(["王美玲", "鄭美玲"], ["4-5", "4-6", "4-7", "5-3", "5-4", "5-5", "5-6", "5-7"]);
+addRestrictedSlots(["王美玲", "鄭美玲"], ["4-5", "4-6", "4-7", "5-3", "5-4", "5-5", "5-6", "5-7"], "教育部推廣委員任務");
 // 音樂怡君：週三下午公假
-addRestrictedSlots(["陳怡君"], ["3-5", "3-6", "3-7"]);
+addRestrictedSlots(["陳怡君"], ["3-5", "3-6", "3-7"], "音樂公假");
 // 體育明錦：週二、週三下午第七節
-addRestrictedSlots(["蔣明錦"], ["2-7", "3-7"]);
+addRestrictedSlots(["蔣明錦"], ["2-7", "3-7"], "體育專項任務");
 // 宜華：週四第五節 (國際教育電台)
-addRestrictedSlots(["曾宜華"], ["4-5"]);
+addRestrictedSlots(["曾宜華"], ["4-5"], "國際教育電台錄音");
 // 義文：避開第一節及第五節
-addRestrictedSlots(["王義文"], ["1-1", "1-5", "2-1", "2-5", "3-1", "3-5", "4-1", "4-5", "5-1", "5-5"]);
+addRestrictedSlots(["王義文"], ["1-1", "1-5", "2-1", "2-5", "3-1", "3-5", "4-1", "4-5", "5-1", "5-5"], "特定不排課時段");
 // 淑君主任：週四上午第二至四節 (輔導室會議)
-addRestrictedSlots(["陳淑君"], ["4-2", "4-3", "4-4"]);
+addRestrictedSlots(["陳淑君"], ["4-2", "4-3", "4-4"], "輔導室會議");
 // 怡妤：週二下午 (技藝班)
-addRestrictedSlots(["林怡妤"], ["2-5", "2-6", "2-7"]);
+addRestrictedSlots(["林怡妤"], ["2-5", "2-6", "2-7"], "技藝班帶隊");
 // 范家豪、楊怡婷、李淑芬：週四上午 (分區團督)
-addRestrictedSlots(["范家豪", "楊怡婷", "李淑芬"], ["4-1", "4-2", "4-3", "4-4"]);
+addRestrictedSlots(["范家豪", "楊怡婷", "李淑芬"], ["4-1", "4-2", "4-3", "4-4"], "分區團督");
 // 黃嘉德：週四下午 (技藝班)
-addRestrictedSlots(["黃嘉德"], ["4-5", "4-6", "4-7"]);
+addRestrictedSlots(["黃嘉德"], ["4-5", "4-6", "4-7"], "技藝班帶隊");
 
 // ==========================================
 // 3. 全域變數
@@ -929,44 +933,101 @@ function isTeacherBusy(lookupNameClean, timeKey) {
 function isTeacherInRestrictedSlot(teacherNameClean, timeKey) {
   if (!teacherNameClean || !timeKey) return false;
   const slots = TEACHER_RESTRICTED_SLOTS[teacherNameClean];
-  return slots ? slots.includes(timeKey) : false;
+  if (!slots) return false;
+  if (Array.isArray(slots)) return slots.includes(timeKey);
+  return Boolean(slots[timeKey]);
+}
+
+/**
+ * 取得教師在該時段受限的具體原因 (若無則回傳 null)
+ */
+function getTeacherRestrictedReason(teacherNameClean, timeKey) {
+  if (!teacherNameClean || !timeKey) return null;
+  const slots = TEACHER_RESTRICTED_SLOTS[teacherNameClean];
+  if (!slots) return null;
+  if (Array.isArray(slots)) return slots.includes(timeKey) ? "不排課時段" : null;
+  return slots[timeKey] || null;
 }
 
 /**
  * 檢查是否為「不建議調課」的課程 (淺橘色判定)
- * @param {string} classCode 班級代號 (ex: "701")
- * @param {string} subject 科目名稱
- * @param {string} otherTeacherClean 對方老師姓名
- * @param {string} currentTimeKey 班級該堂課目前時段 (ex: "3-2")
- * @param {string} myLeaveTimeKey 請假者原請假時段 (ex: "1-3")
- * @param {string} myNameClean 請假者本人姓名
+ * 回傳結構: { isDiscouraged: boolean, label?: string, detail?: string }
  */
-function isDiscouragedCourse(classCode, subject, otherTeacherClean, currentTimeKey, myLeaveTimeKey, myNameClean) {
-  if (!subject) return false;
+function checkDiscouragedCourse(classCode, subject, otherTeacherClean, currentTimeKey, myLeaveTimeKey, myNameClean) {
+  if (!subject) return { isDiscouraged: false };
 
   // 1. 兼課老師 check
-  if (PART_TIME_TEACHERS.some(pt => otherTeacherClean.includes(pt))) return true;
+  if (PART_TIME_TEACHERS.some(pt => otherTeacherClean.includes(pt))) {
+    return {
+      isDiscouraged: true,
+      label: "兼課",
+      detail: `⚠️ 不宜調課【兼課師資】：${otherTeacherClean} 老師為兼課/外聘老師，在校課務時段固定`
+    };
+  }
 
   // 2. 本土語言 check (綁定週一、四、五，不宜動)
-  if (subject.includes("本土") || subject.includes("閩") || subject.includes("客") || subject.includes("原住")) return true;
+  if (subject.includes("本土") || subject.includes("閩") || subject.includes("客") || subject.includes("原住")) {
+    return {
+      isDiscouraged: true,
+      label: "本土語",
+      detail: `⚠️ 不宜調課【本土語】：此堂為本土語言課程（${subject}），排課時段固定`
+    };
+  }
 
   // 3. 學習中心 / 英資班抽離群組 check
   if (RESOURCE_ROOM_RULES[classCode]) {
-    const isHit = RESOURCE_ROOM_RULES[classCode].some(ruleKeyword => subject.includes(ruleKeyword));
-    if (isHit) return true;
+    const hit = RESOURCE_ROOM_RULES[classCode].find(r => {
+      const targetSubj = typeof r === 'string' ? r : r.subject;
+      return subject.includes(targetSubj);
+    });
+    if (hit) {
+      const typeName = typeof hit === 'object' && hit.type ? hit.type : "抽離群組";
+      const shortLabel = typeName.includes("英資") ? "英資" : (typeName.includes("學習中心") ? "抽離" : "抽離");
+      return {
+        isDiscouraged: true,
+        label: shortLabel,
+        detail: `⚠️ 不宜調課【${typeName}】：${classCode}班 ${subject} 屬跨班抽離課程，調動將影響其他班級抽離運作`
+      };
+    }
   }
 
-  // 4. 共同不排課時段 check (新增)：
-  // 4a. 對方老師換入「我請假的時間」時，若正逢對方的共同不排課/領域共備/公假會議時段 -> 不宜調
-  if (isTeacherInRestrictedSlot(otherTeacherClean, myLeaveTimeKey)) return true;
+  // 4. 共同不排課時段 check：
+  // 4a. 對方老師換入「我請假的時間」時，若正逢對方的共同不排課/領域共備/公假會議時段
+  const otherLeaveReason = getTeacherRestrictedReason(otherTeacherClean, myLeaveTimeKey);
+  if (otherLeaveReason) {
+    return {
+      isDiscouraged: true,
+      label: "共備",
+      detail: `⚠️ 不宜調課【對方受限】：對方（${otherTeacherClean}）若換入您請假的時段，正逢【${otherLeaveReason}】`
+    };
+  }
 
-  // 4b. 對方老師目前這堂課本身就排在限制時段中 -> 不宜調
-  if (isTeacherInRestrictedSlot(otherTeacherClean, currentTimeKey)) return true;
+  // 4b. 對方老師目前這堂課本身就排在限制時段中
+  const otherCurReason = getTeacherRestrictedReason(otherTeacherClean, currentTimeKey);
+  if (otherCurReason) {
+    return {
+      isDiscouraged: true,
+      label: "共備",
+      detail: `⚠️ 不宜調課【時段受限】：對方（${otherTeacherClean}）此堂原排於【${otherCurReason}】`
+    };
+  }
 
-  // 4c. 請假者本人被調入「對方原時段」時，若正逢本人的共同不排課/領域共備時段 -> 不宜調
-  if (isTeacherInRestrictedSlot(myNameClean, currentTimeKey)) return true;
+  // 4c. 請假者本人被調入「對方原時段」時，若正逢本人的共同不排課/領域共備時段
+  const myCurReason = getTeacherRestrictedReason(myNameClean, currentTimeKey);
+  if (myCurReason) {
+    return {
+      isDiscouraged: true,
+      label: "本人限制",
+      detail: `⚠️ 不宜調課【本人受限】：若您調入此節次，您本人（${myNameClean}）正逢【${myCurReason}】`
+    };
+  }
 
-  return false;
+  return { isDiscouraged: false };
+}
+
+// 相容舊呼叫函式
+function isDiscouragedCourse(classCode, subject, otherTeacherClean, currentTimeKey, myLeaveTimeKey, myNameClean) {
+  return checkDiscouragedCourse(classCode, subject, otherTeacherClean, currentTimeKey, myLeaveTimeKey, myNameClean).isDiscouraged;
 }
 
 
@@ -1061,11 +1122,13 @@ function renderRescheduleTables(classList, myNameClean, myLeaveDay) {
         const cellData = schedule[currentTimeKey];
         
         let cellClass = "";
+        let cellTitle = "";
         let content = `<span class="text-muted">-</span>`;
 
         // 1. 目標請假課程 (藍色)
         if (d == myLeaveDay && p == myLeavePeriod) {
           cellClass = "cell-target";
+          cellTitle = "本堂為您請假的課程";
           if (cellData) content = `<span class="cell-subject">${cellData.subject}</span><span class="cell-teacher">(本堂請假)</span>`;
         } 
         // 2. 當天其他時段，若有課才變灰 (不再整天強制灰)
@@ -1080,8 +1143,10 @@ function renderRescheduleTables(classList, myNameClean, myLeaveDay) {
             // 3. 判斷本人是否有課 (灰色 - 優先級高)
             if (isTeacherBusy(myNameClean, currentTimeKey)) {
                cellClass = "cell-self-busy"; // 我自己有課，不能調來這
+               cellTitle = "不可調：您本人此節已有排課";
                if(d == myLeaveDay) {
                    content += `<span class="text-danger small fw-bold d-block" style="font-size:0.7em">(當天請假)</span>`;
+                   cellTitle = "不可調：當天您已登記請假";
                }
             } else {
               // 4. 判斷對方是否可調
@@ -1089,12 +1154,17 @@ function renderRescheduleTables(classList, myNameClean, myLeaveDay) {
                 // 檢查對方在「我請假的時間」是否有空
                 if (isTeacherBusy(otherTeacherDisplay, myLeaveTimeKey)) {
                   cellClass = "cell-swap-no"; // 對方該時段有課 (撞堂)
+                  cellTitle = `❌ 撞堂：對方（${otherTeacherDisplay}）在您的請假節次已有排課`;
                 } else {
-                  // --- v5.1 修改：檢查是否為淺橘色 (不宜調動) ---
-                  if (isDiscouragedCourse(classCode, subj, otherTeacherDisplay, currentTimeKey, myLeaveTimeKey, myNameClean)) {
+                  // --- 檢查是否為淺橘色 (不宜調動) ---
+                  const discouragedCheck = checkDiscouragedCourse(classCode, subj, otherTeacherDisplay, currentTimeKey, myLeaveTimeKey, myNameClean);
+                  if (discouragedCheck.isDiscouraged) {
                     cellClass = "cell-swap-discouraged"; // 淺橘色
+                    content += `<span class="discouraged-badge">⚠️不宜·${discouragedCheck.label}</span>`;
+                    cellTitle = discouragedCheck.detail;
                   } else {
                     cellClass = "cell-swap-ok"; // 淺綠色 (完全可調)
+                    cellTitle = `✅ 可調：對方（${otherTeacherDisplay}）該節有空且無共同不排課衝突`;
                   }
                 }
               }
@@ -1102,7 +1172,7 @@ function renderRescheduleTables(classList, myNameClean, myLeaveDay) {
           }
         }
 
-        headerHtml += `<td class="${cellClass}">${content}</td>`;
+        headerHtml += `<td class="${cellClass}"${cellTitle ? ` title="${cellTitle}"` : ""}>${content}</td>`;
       }
       
       headerHtml += `<td class="fw-bold bg-light">第 ${p} 節</td>`;
