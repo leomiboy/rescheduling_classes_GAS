@@ -434,6 +434,34 @@ const CLOUD_URLS = {
 };
 
 // ==========================================
+// 訪客行為紀錄追蹤工具 (私有試算表無痕記錄)
+// ==========================================
+function getVisitorId() {
+  let id = localStorage.getItem('_schedule_v_id');
+  if (!id) {
+    id = 'v_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+    localStorage.setItem('_schedule_v_id', id);
+  }
+  return id;
+}
+
+function sendUsageLog(eventType, target = '', details = '') {
+  try {
+    const params = new URLSearchParams({
+      action: 'log',
+      visitor_id: getVisitorId(),
+      event: eventType,
+      target: target,
+      details: details
+    });
+    // 使用 mode: 'no-cors' 非同步發送，不阻礙任何操作，不跳 CORS 紅字
+    fetch(`${GAS_WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' }).catch(() => {});
+  } catch (e) {
+    // 靜默處理，不影響主功能
+  }
+}
+
+// ==========================================
 // 2. 特殊課程規則設定 (115-1 最新版)
 // ==========================================
 
@@ -742,6 +770,9 @@ async function fetchDataFromCloud() {
     if(statusMapping) statusMapping.textContent = `已載入 ${Object.keys(classTeacherMapping).length} 班`;
     if(statusClass) statusClass.textContent = `已載入 ${Object.keys(classSchedules).length} 班`;
 
+    // 記錄進站造訪
+    sendUsageLog('進站造訪', '首頁載入完成', navigator.userAgent);
+
   } catch (error) {
     console.error(error);
     if(loadingStatusArea) {
@@ -878,6 +909,13 @@ if(searchBtn) {
     });
 
     renderSystemAResults(availableTeachers, selectedDay, selectedPeriod);
+
+    // 記錄代課查詢
+    const condDetails = [
+      checkedSubjects.length > 0 ? `科目:${checkedSubjects.join(',')}` : '',
+      checkedClasses.length > 0 ? `班級:${checkedClasses.join(',')}` : ''
+    ].filter(Boolean).join('; ') || '全科/全班';
+    sendUsageLog('代課查詢', `星期${selectedDay}-第${selectedPeriod}節`, condDetails);
   });
 }
 
@@ -1069,6 +1107,9 @@ if(rescheduleBtn) {
     }
 
     renderRescheduleTables(affectedClasses, targetTeacherClean, targetDay);
+
+    // 記錄調課查詢
+    sendUsageLog('調課查詢', targetTeacherClean, `星期${targetDay}`);
   });
 }
 
